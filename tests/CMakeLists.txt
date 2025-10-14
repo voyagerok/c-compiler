@@ -10,6 +10,11 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(Catch2)
 
+if ("cxx_std_23" IN_LIST CMAKE_CXX_COMPILE_FEATURES)
+  target_compile_features(Catch2 PRIVATE cxx_std_23)
+  target_compile_features(Catch2WithMain PRIVATE cxx_std_23)
+endif()
+
 add_executable(test_lexer test_lexer.cpp ../src/lexer.cpp ../src/file.cpp)
 target_link_libraries(test_lexer PRIVATE Catch2::Catch2WithMain)
 include_directories(../src)

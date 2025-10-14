@@ -17,8 +17,10 @@ token lexer::get_next_token(file &f) {
     return token{token_class::T_EOF};
   }
 
-  int c;
+  char *cur_pos = nullptr;
+  int c = 0;
   do {
+    cur_pos = f.data();
     c = get_next_char();
   } while (is_space(c) && !f.is_eof());
 
@@ -26,7 +28,6 @@ token lexer::get_next_token(file &f) {
     return token{token_class::T_EOF};
   }
 
-  char *cur_pos = f.data();
   switch (c) {
   case '=':
     if (f.peek() == '=') {
