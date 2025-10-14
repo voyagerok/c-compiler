@@ -195,6 +195,8 @@ token lexer::get_next_token(file &f) {
   case '?':
     return token{c};
     break;
+  default:
+    throw std::runtime_error(std::format("Unexpected character '{}'", c));
   }
 }
 
