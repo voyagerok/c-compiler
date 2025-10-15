@@ -41,11 +41,16 @@ enum token_class {
 
 struct token {
   explicit token(int token_class) : m_token_class(token_class) {}
-  token(int token_class, std::string_view value)
-      : m_token_class(token_class), m_value(value) {}
+  token(int token_class, const char *start, const char *end)
+      : m_token_class(token_class), m_value(start, end) {}
+  token(int token_class, std::string &&buffer)
+      : m_token_class(token_class), m_buffer(std::move(buffer)) {
+    m_value = m_buffer;
+  }
 
   int m_token_class = token_class::T_EOF;
   std::string_view m_value;
+  std::string m_buffer;
 };
 
 class lexer {
@@ -55,7 +60,8 @@ public:
   bool has_more_tokens() const { return !m_file.is_eof(); }
 
 private:
-  int get_next_char();
+  int move_next();
+  bool parse_string_or_char_literal(file &f, char quote);
 
 private:
   file &m_file;

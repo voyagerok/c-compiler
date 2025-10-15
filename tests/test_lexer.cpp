@@ -86,6 +86,28 @@ TEST_CASE("get_next_token multichar", "[lexer]") {
   REQUIRE(t1.m_value == ">=");
 }
 
+TEST_CASE("get_next_token strings", "[lexer]") {
+  char test_data[] = "\nidentifier another_identifier L\"string literal\" 'c'";
+  file f(test_data, sizeof(test_data));
+  cc::lexer l(f);
+
+  auto token = l.get_next_token(f);
+  REQUIRE(token.m_token_class == cc::token_class::IDENTIFIER);
+  REQUIRE(token.m_value == "identifier");
+
+  token = l.get_next_token(f);
+  REQUIRE(token.m_token_class == cc::token_class::IDENTIFIER);
+  REQUIRE(token.m_value == "another_identifier");
+
+  token = l.get_next_token(f);
+  REQUIRE(token.m_token_class == cc::token_class::STRING_LITERAL);
+  REQUIRE(token.m_value == "L\"string literal\"");
+
+  token = l.get_next_token(f);
+  REQUIRE(token.m_token_class == cc::token_class::CONSTANT);
+  REQUIRE(token.m_value == "'c'");
+}
+
 TEST_CASE("get_next_token right assign", "[lexer]") {
   char test_data[] = ">>=";
   file f(
