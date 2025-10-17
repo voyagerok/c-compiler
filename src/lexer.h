@@ -13,7 +13,7 @@ enum token_class {
   T_EOF = 255,
   IDENTIFIER = 254,
   KEYWORD = 253,
-  CONSTANT = 252,
+  CHAR_CONSTANT = 252,
   STRING_LITERAL = 251,
   ELLIPSIS = 250,     // ...
   RIGHT_ASSIGN = 249, // >>=
@@ -36,17 +36,19 @@ enum token_class {
   LE_OP = 232,        // <=
   GE_OP = 231,        // >=
   EQ_OP = 230,        // ==
-  NE_OP = 229         // !=
+  NE_OP = 229,        // !=
+  INT_CONSTANT = 228,
+  OCT_CONSTANT = 227,
+  HEX_CONSTANT = 226,
+  FLOAT_CONSTANT = 225,
+  BIN_CONSTANT = 224,
 };
 
 struct token {
+  token() = default;
   explicit token(int token_class) : m_token_class(token_class) {}
   token(int token_class, const char *start, const char *end)
       : m_token_class(token_class), m_value(start, end) {}
-  token(int token_class, std::string &&buffer)
-      : m_token_class(token_class), m_buffer(std::move(buffer)) {
-    m_value = m_buffer;
-  }
 
   int m_token_class = token_class::T_EOF;
   std::string_view m_value;
@@ -56,12 +58,20 @@ struct token {
 class lexer {
 public:
   explicit lexer(file &f) : m_file(f) {}
-  token get_next_token(file &f);
-  bool has_more_tokens() const { return !m_file.is_eof(); }
+  token get_next_token();
 
 private:
   int move_next();
-  bool parse_string_or_char_literal(file &f, char quote);
+  void move_back();
+  bool parse_identifier_or_keyword(token &tok);
+  bool parse_string_literal(token &tok);
+  bool parse_char_literal(token &tok);
+  bool parse_decimal_number(token &tok);
+  bool parse_octal_number(token &tok);
+  bool parse_hex_number(token &tok);
+  void parse_number_suffix(int token_class);
+  void process_single_line_comment();
+  void process_multi_line_comment();
 
 private:
   file &m_file;

@@ -13,7 +13,13 @@ public:
   bool is_eof() const { return m_pos >= m_addr + m_size; }
   char peek() const { return is_eof() ? '\0' : *m_pos; }
   char get();
+  void unget() {
+    if (m_pos > m_addr) {
+      --m_pos;
+    }
+  }
   char *pos() const { return m_pos; }
+  char *begin() const { return m_addr; }
 
 private:
   char *m_addr = nullptr;
