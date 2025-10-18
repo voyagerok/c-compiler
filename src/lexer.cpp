@@ -87,17 +87,17 @@ token lexer::get_next_token() {
     while (is_space(m_file.peek())) {
       move_next();
     }
+    comment_found = false;
     if (m_file.peek() == '/') {
       move_next();
       if (m_file.peek() == '/') {
-        process_single_line_comment();
+        skip_single_line_comment();
         comment_found = true;
       } else if (m_file.peek() == '*') {
-        process_multi_line_comment();
+        skip_multi_line_comment();
         comment_found = true;
       } else {
         move_back();
-        comment_found = false;
       }
     }
   } while (comment_found);
@@ -371,8 +371,9 @@ bool lexer::parse_identifier_or_keyword(token &tok) {
     }
     if (is_keyword({tok_start, m_file.pos()})) {
       tok = {token_class::KEYWORD, tok_start, m_file.pos()};
+    } else {
+      tok = {token_class::IDENTIFIER, tok_start, m_file.pos()};
     }
-    tok = {token_class::IDENTIFIER, tok_start, m_file.pos()};
     return true;
   }
   return false;
@@ -565,13 +566,13 @@ void lexer::parse_number_suffix(int tok_class) {
   }
 }
 
-void lexer::process_single_line_comment() {
+void lexer::skip_single_line_comment() {
   while (m_file.peek() != '\n' && !m_file.is_eof()) {
     move_next();
   }
 }
 
-void lexer::process_multi_line_comment() {
+void lexer::skip_multi_line_comment() {
   while (!m_file.is_eof()) {
     if (m_file.peek() == '*') {
       move_next();

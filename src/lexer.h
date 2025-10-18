@@ -70,8 +70,8 @@ private:
   bool parse_octal_number(token &tok);
   bool parse_hex_number(token &tok);
   void parse_number_suffix(int token_class);
-  void process_single_line_comment();
-  void process_multi_line_comment();
+  void skip_single_line_comment();
+  void skip_multi_line_comment();
 
 private:
   file &m_file;

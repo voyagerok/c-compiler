@@ -118,10 +118,12 @@ TEST_CASE("get_next_token unexpected character", "[lexer]") {
   REQUIRE_THROWS_AS(l.get_next_token(), std::runtime_error);
 }
 
-TEST_CASE("parse_floating_point: valid floats", "[lexer]") {
+TEST_CASE("get_next_token valid floats", "[lexer]") {
   std::vector<std::string> valid = {
-      "0.0",  "123.456", ".5",    "5.",     "1e10",    "2E-2",    "3.14e+2",
-      "0.1f", "1.2F",    "1e-3F", "1.0e10", "1.0e-10", "1.0e+10", "1.0e10f"};
+      "0.0",     "123.456", ".5",   "5.",    "1e10",   "2E-2",
+      "3.14e+2", "0.1f",    "1.2F", "1e-3F", "1.0e10", "1.0e-10",
+      "1.0e+10", "1.0e10f", "0.",   ".0",    "0e0",    "0.0e0",
+      "0.0e+0",  "0.0e-0",  "0.0f", "0.0F"};
   for (const auto &s : valid) {
     file f(const_cast<char *>(s.c_str()), s.size());
     cc::lexer l(f);
@@ -131,25 +133,13 @@ TEST_CASE("parse_floating_point: valid floats", "[lexer]") {
   }
 }
 
-TEST_CASE("parse_floating_point: invalid floats", "[lexer]") {
+TEST_CASE("get_next_token invalid floats", "[lexer]") {
   std::vector<std::string> invalid = {"1e",    "1e+",   "1e-",     "1.0e",
                                       "1.0e+", "1.0e-", "1.0e10x", "1e10e10"};
   for (const auto &s : invalid) {
     file f(const_cast<char *>(s.c_str()), s.size());
     cc::lexer l(f);
     REQUIRE_THROWS_AS(l.get_next_token(), std::runtime_error);
-  }
-}
-
-TEST_CASE("parse_floating_point: edge cases", "[lexer]") {
-  std::vector<std::string> edge = {"0.",     ".0",     "0e0",  "0.0e0",
-                                   "0.0e+0", "0.0e-0", "0.0f", "0.0F"};
-  for (const auto &s : edge) {
-    file f(const_cast<char *>(s.c_str()), s.size());
-    cc::lexer l(f);
-    cc::token tok = l.get_next_token();
-    REQUIRE(tok.m_token_class == cc::token_class::FLOAT_CONSTANT);
-    REQUIRE(tok.m_value == s);
   }
 }
 
@@ -222,4 +212,41 @@ TEST_CASE("get_next_token invalid numbers", "[lexer]") {
     cc::lexer l(f);
     REQUIRE_THROWS_AS(l.get_next_token(), std::runtime_error);
   }
+}
+
+TEST_CASE("get_next_token comments", "[lexer]") {
+  char test_data[] = R"(
+// This is a single-line comment
+int main() {
+  /* This is a
+     multi-line comment */
+  return 0; // Another comment
+}
+)";
+  file f(test_data, sizeof(test_data) - 1);
+  cc::lexer l(f);
+  auto t = l.get_next_token();
+  REQUIRE(t.m_token_class == cc::token_class::KEYWORD);
+  REQUIRE(t.m_value == "int");
+  t = l.get_next_token();
+  REQUIRE(t.m_token_class == cc::token_class::IDENTIFIER);
+  REQUIRE(t.m_value == "main");
+  t = l.get_next_token();
+  REQUIRE(t.m_token_class == static_cast<int>('('));
+  t = l.get_next_token();
+  REQUIRE(t.m_token_class == static_cast<int>(')'));
+  t = l.get_next_token();
+  REQUIRE(t.m_token_class == static_cast<int>('{'));
+  t = l.get_next_token();
+  REQUIRE(t.m_token_class == cc::token_class::KEYWORD);
+  REQUIRE(t.m_value == "return");
+  t = l.get_next_token();
+  REQUIRE(t.m_token_class == cc::token_class::INT_CONSTANT);
+  REQUIRE(t.m_value == "0");
+  t = l.get_next_token();
+  REQUIRE(t.m_token_class == static_cast<int>(';'));
+  t = l.get_next_token();
+  REQUIRE(t.m_token_class == static_cast<int>('}'));
+  t = l.get_next_token();
+  REQUIRE(t.m_token_class == cc::token_class::T_EOF);
 }
